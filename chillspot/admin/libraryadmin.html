@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Library Admin Panel</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f9fafb; }
+    .card { background: white; border-radius: 0.75rem; padding: 1.5rem; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-6">
+
+  <h1 class="text-3xl font-bold text-center text-indigo-600 mb-8">📖 Library Admin Panel</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
+
+    <!-- Manage Status -->
+    <div class="card">
+      <h2 class="text-xl font-semibold mb-4">Library Status</h2>
+      <select id="libraryStatus" class="w-full p-2 border rounded mb-3">
+        <option value="auto">Auto (9 AM - 5 PM)</option>
+        <option value="open">Open</option>
+        <option value="closed">Closed</option>
+        <option value="custom">Custom</option>
+      </select>
+      <input type="text" id="customLibraryStatus" placeholder="Enter custom status..." class="w-full p-2 border rounded mb-3 hidden">
+      <button onclick="saveStatus()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Save</button>
+    </div>
+
+    <!-- Manage Crowd -->
+    <div class="card">
+      <h2 class="text-xl font-semibold mb-4">Crowd Level</h2>
+      <select id="crowdLevel" class="w-full p-2 border rounded mb-3">
+        <option value="Low">Low</option>
+        <option value="Medium" selected>Medium</option>
+        <option value="High">High</option>
+      </select>
+      <button onclick="saveCrowd()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Save</button>
+    </div>
+
+    <!-- Manage Notifications -->
+    <div class="card col-span-1 md:col-span-2">
+      <h2 class="text-xl font-semibold mb-4">Notifications</h2>
+      <div class="flex mb-3">
+        <input type="text" id="notificationInput" placeholder="Enter a new notification..." class="flex-1 p-2 border rounded mr-2">
+        <button onclick="addNotification()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Add</button>
+      </div>
+      <ul id="notificationList" class="space-y-2"></ul>
+    </div>
+
+    <!-- Manage Books -->
+    <div class="card col-span-1 md:col-span-2">
+      <h2 class="text-xl font-semibold mb-4">New Arrivals</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+        <input type="text" id="bookTitle" placeholder="Book Title" class="p-2 border rounded">
+        <input type="text" id="bookAuthor" placeholder="Author" class="p-2 border rounded">
+        <input type="text" id="bookYear" placeholder="Year" class="p-2 border rounded">
+      </div>
+      <button onclick="addBook()" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Add Book</button>
+      <ul id="bookList" class="mt-4 space-y-2"></ul>
+    </div>
+
+  </div>
+
+  <script>
+    // Save status
+    function saveStatus() {
+      const status = document.getElementById("libraryStatus").value;
+      const customText = document.getElementById("customLibraryStatus").value;
+
+      if (status === "custom" && customText.trim() !== "") {
+        localStorage.setItem("libraryStatus", "custom");
+        localStorage.setItem("customLibraryStatus", customText);
+      } else {
+        localStorage.setItem("libraryStatus", status);
+      }
+      alert("Library status saved!");
+    }
+
+    // Show/hide custom input
+    document.getElementById("libraryStatus").addEventListener("change", function() {
+      document.getElementById("customLibraryStatus").classList.toggle("hidden", this.value !== "custom");
+    });
+
+    // Save crowd
+    function saveCrowd() {
+      const level = document.getElementById("crowdLevel").value;
+      localStorage.setItem("crowdLevel", level);
+      alert("Crowd level saved!");
+    }
+
+    // Notifications
+    function loadNotifications() {
+      const list = document.getElementById("notificationList");
+      const notifications = JSON.parse(localStorage.getItem("libraryNotifications")) || [];
+      list.innerHTML = "";
+      notifications.forEach((note, index) => {
+        list.innerHTML += `
+          <li class="flex justify-between items-center bg-gray-100 p-2 rounded">
+            <span>${note}</span>
+            <button onclick="removeNotification(${index})" class="text-red-500 hover:text-red-700">Remove</button>
+          </li>`;
+      });
+    }
+
+    function addNotification() {
+      const input = document.getElementById("notificationInput");
+      const notifications = JSON.parse(localStorage.getItem("libraryNotifications")) || [];
+      if (input.value.trim() !== "") {
+        notifications.push(input.value.trim());
+        localStorage.setItem("libraryNotifications", JSON.stringify(notifications));
+        input.value = "";
+        loadNotifications();
+      }
+    }
+
+    function removeNotification(index) {
+      let notifications = JSON.parse(localStorage.getItem("libraryNotifications")) || [];
+      notifications.splice(index, 1);
+      localStorage.setItem("libraryNotifications", JSON.stringify(notifications));
+      loadNotifications();
+    }
+
+    // Books
+    function loadBooks() {
+      const list = document.getElementById("bookList");
+      const books = JSON.parse(localStorage.getItem("books")) || [];
+      list.innerHTML = "";
+      books.forEach((book, index) => {
+        list.innerHTML += `
+          <li class="flex justify-between items-center bg-gray-100 p-2 rounded">
+            <span>${book.title} by ${book.author} (${book.year})</span>
+            <button onclick="removeBook(${index})" class="text-red-500 hover:text-red-700">Remove</button>
+          </li>`;
+      });
+    }
+
+    function addBook() {
+      const title = document.getElementById("bookTitle").value;
+      const author = document.getElementById("bookAuthor").value;
+      const year = document.getElementById("bookYear").value;
+
+      if (title && author && year) {
+        const books = JSON.parse(localStorage.getItem("books")) || [];
+        books.push({title, author, year});
+        localStorage.setItem("books", JSON.stringify(books));
+        document.getElementById("bookTitle").value = "";
+        document.getElementById("bookAuthor").value = "";
+        document.getElementById("bookYear").value = "";
+        loadBooks();
+      }
+    }
+
+    function removeBook(index) {
+      let books = JSON.parse(localStorage.getItem("books")) || [];
+      books.splice(index, 1);
+      localStorage.setItem("books", JSON.stringify(books));
+      loadBooks();
+    }
+
+    // Init
+    window.onload = function() {
+      loadNotifications();
+      loadBooks();
+    }
+  </script>
+
+</body>
+</html>
