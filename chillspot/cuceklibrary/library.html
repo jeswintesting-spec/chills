@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CUCEK Library - Dashboard</title>
+
+  <!-- Tailwind CSS & FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, rgba(15,118,110,0.7), rgba(19,78,74,0.7)),
+      url("https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=1600&q=80")
+      no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      transform: translateY(-5px);
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .status-badge {
+      transition: background-color 0.3s ease-in-out;
+      padding: 8px 18px;
+      border-radius: 999px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: white;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- OVERLAY -->
+  <div class="min-h-screen flex flex-col backdrop-blur-sm">
+
+    <!-- HEADER -->
+    <header class="bg-gradient-to-r from-teal-700/90 to-teal-600/90 backdrop-blur-md sticky top-0 z-50 shadow-md">
+      <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+
+        <a href="../backkk.html" class="text-3xl font-bold text-white hover:text-gray-200 transition">
+          ChillSpot CUCEK
+        </a>
+
+        <div id="library-status" class="status-badge bg-gray-400">
+          <span id="status-icon"><i class="fas fa-clock"></i></span>
+          <span id="status-text">Checking Status...</span>
+        </div>
+
+      </nav>
+    </header>
+
+    <!-- HERO -->
+    <section class="text-center py-20">
+      <h1 class="text-6xl font-bold mb-4 drop-shadow-lg">Campus Library</h1>
+      <p class="text-lg text-gray-200 max-w-2xl mx-auto drop-shadow-md">
+        Check live crowd, announcements, and latest arrivals from the CUCEK Library.
+      </p>
+    </section>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-grow container mx-auto p-6 sm:p-10">
+
+      <!-- NOTIFICATIONS -->
+      <section id="notifications-section" class="mb-10 hidden">
+        <h2 class="text-3xl font-semibold text-teal-300 mb-4">
+          <i class="fas fa-bell mr-2"></i>Library Announcements
+        </h2>
+        <div id="notifications-list" class="space-y-4"></div>
+      </section>
+
+      <!-- CROWD LEVEL -->
+      <section class="text-center mb-14">
+        <h2 class="text-4xl font-semibold text-teal-300 mb-6 drop-shadow-md">📖 Current Crowd Level</h2>
+        <div id="crowd-level"
+          class="text-lg font-bold py-3 px-6 rounded-lg shadow-lg glass-card inline-block">
+          Loading...
+        </div>
+      </section>
+
+      <!-- BOOKS -->
+      <h2 class="text-4xl font-semibold text-center text-teal-300 mb-10 drop-shadow-md">📚 New Arrivals</h2>
+      <div id="book-section" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <p class="text-center text-gray-300 col-span-3">Fetching latest books...</p>
+      </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-gradient-to-r from-teal-700/90 to-teal-600/90 text-white py-6 text-center mt-auto">
+      <p class="text-lg font-semibold">© 2025 ChillSpot CUCEK</p>
+      <p class="text-gray-300 text-sm">Cochin University College of Engineering, Kuttanad</p>
+    </footer>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    const API_URL = "api.php";
+
+    async function loadData() {
+      try {
+        const res = await fetch(API_URL + "?action=getAllData");
+        const data = await res.json();
+
+        // ===== LIBRARY STATUS =====
+        const statusDiv = document.getElementById("library-status");
+        const statusText = document.getElementById("status-text");
+        const statusIcon = document.getElementById("status-icon");
+        const { libraryStatus, customLibraryStatus, crowdLevel } = data.settings;
+
+        if (libraryStatus === "open") {
+          statusText.textContent = "Open Now";
+          statusDiv.className = "status-badge bg-green-500";
+          statusIcon.innerHTML = '<i class="fas fa-door-open"></i>';
+        } else if (libraryStatus === "closed") {
+          statusText.textContent = "Closed";
+          statusDiv.className = "status-badge bg-red-500";
+          statusIcon.innerHTML = '<i class="fas fa-door-closed"></i>';
+        } else {
+          statusText.textContent = customLibraryStatus || "Auto Mode";
+          statusDiv.className = "status-badge bg-yellow-500";
+          statusIcon.innerHTML = '<i class="fas fa-info-circle"></i>';
+        }
+
+        // ===== CROWD LEVEL =====
+        const crowdDiv = document.getElementById("crowd-level");
+        if (crowdLevel === "Low") {
+          crowdDiv.textContent = "Low • Silent & Peaceful 🤫";
+        } else if (crowdLevel === "High") {
+          crowdDiv.textContent = "High • Busy 🏃‍♂️";
+        } else {
+          crowdDiv.textContent = "Moderate • Comfortable 🙂";
+        }
+
+        // ===== NOTIFICATIONS =====
+        const notifications = data.notifications || [];
+        const section = document.getElementById("notifications-section");
+        const list = document.getElementById("notifications-list");
+        list.innerHTML = "";
+
+        if (notifications.length > 0) {
+          section.classList.remove("hidden");
+          notifications.forEach((note, idx) => {
+            list.innerHTML += `
+              <div class="glass-card p-5 rounded-xl shadow-lg">
+                <p class="font-bold text-lg"><i class="fas fa-bell text-yellow-300 mr-2"></i>Announcement ${idx + 1}</p>
+                <p>${note.message}</p>
+              </div>`;
+          });
+        } else {
+          section.classList.add("hidden");
+        }
+
+        // ===== BOOKS =====
+        const books = data.books || [];
+        const bookSection = document.getElementById("book-section");
+        bookSection.innerHTML = "";
+
+        if (books.length === 0) {
+          bookSection.innerHTML = `<p class="text-center text-gray-300 col-span-3">No new arrivals at the moment.</p>`;
+        } else {
+          books.forEach(book => {
+            bookSection.innerHTML += `
+              <div class="glass-card rounded-xl p-6 shadow-lg">
+                <h4 class="text-2xl font-bold text-white">${book.title}</h4>
+                <p class="text-gray-200">by ${book.author}</p>
+                <p class="text-sm text-gray-300 mt-1">Published: ${book.publication_year}</p>
+              </div>`;
+          });
+        }
+
+      } catch (error) {
+        console.error("Error loading library data:", error);
+      }
+    }
+
+    window.onload = () => {
+      loadData();
+      setInterval(loadData, 60000);
+    };
+  </script>
+
+</body>
+</html>
